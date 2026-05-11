@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lmsji Weather — Kita Kita Ji</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-txt">Detecting location…</div>
+</div>
+<div id="toast"></div>
+
+<header>
+  <a class="logo" href="#">
+    <div class="logo-box">🌤</div>
+    Lmsji Weather
+  </a>
+  <div class="unit-toggle">
+    <button id="btnC" class="active">°C</button>
+    <button id="btnF">°F</button>
+  </div>
+  <div class="loc-pill">📍 <span id="locLabel">Detecting…</span></div>
+  <div class="search-bar">
+    <input id="searchInput" type="text" placeholder="Search city…" autocomplete="off" spellcheck="false">
+    <button id="searchBtn">🔍</button>
+  </div>
+</header>
+
+<div class="day-tabs" id="dayTabs">
+  <div class="day-tab active"><span>Loading…</span></div>
+</div>
+
+<div class="main">
+  <div class="current-card">
+    <div class="cur-hero">
+      <div class="cur-hero-bg" id="heroBg"></div>
+      <div class="cur-clouds"></div>
+      <div class="cur-clock" id="curClock">--:--</div>
+      <div class="cur-temp-group">
+        <div class="cur-temp" id="curTemp">--°</div>
+        <div class="cur-city" id="curCity">Loading…</div>
+      </div>
+      <div class="cur-right">
+        <div class="cur-icon" id="curIcon">🌤</div>
+        <div class="cur-desc" id="curDesc">--</div>
+        <div class="cur-feels" id="curFeels">Feels like --°</div>
+      </div>
+    </div>
+    <div class="cur-meta">
+      <div class="meta-cell"><div class="meta-em">💨</div><div class="meta-lbl">Wind</div><div class="meta-val" id="mWind">--</div></div>
+      <div class="meta-cell"><div class="meta-em">💧</div><div class="meta-lbl">Humidity</div><div class="meta-val" id="mHum">--%</div></div>
+      <div class="meta-cell"><div class="meta-em">👁</div><div class="meta-lbl">Visibility</div><div class="meta-val" id="mVis">--</div></div>
+    </div>
+    <div class="cur-meta" style="border-top:none;">
+      <div class="meta-cell" style="border-top:1px solid var(--border)"><div class="meta-em">🔽</div><div class="meta-lbl">Pressure</div><div class="meta-val" id="mPres">--</div></div>
+      <div class="meta-cell" style="border-top:1px solid var(--border)"><div class="meta-em">🌡</div><div class="meta-lbl">Dew Point</div><div class="meta-val" id="mDew">--</div></div>
+      <div class="meta-cell" style="border-top:1px solid var(--border)"><div class="meta-em">☁</div><div class="meta-lbl">Cloud Cover</div><div class="meta-val" id="mCloud">--%</div></div>
+    </div>
+  </div>
+
+  <div class="hourly-card">
+    <div class="card-title">Hourly Forecast</div>
+    <div class="chart-container"><canvas id="hourlyChart"></canvas></div>
+    <div class="hourly-scroll" id="hourlyScroll"></div>
+  </div>
+
+  <div class="map-card">
+    <div style="position:relative;flex:1;">
+      <div id="leaflet-map"></div>
+      <div class="map-btns" id="mapBtns">
+        <button class="map-btn active" data-layer="none">🗺 Base</button>
+        <button class="map-btn" data-layer="clouds_new">☁ Clouds</button>
+        <button class="map-btn" data-layer="precipitation_new">🌧 Rain</button>
+        <button class="map-btn" data-layer="wind_new">💨 Wind</button>
+        <button class="map-btn" data-layer="temp_new">🌡 Temp</button>
+      </div>
+    </div>
+    <div class="map-right">
+      <div class="map-right-hd"><div class="card-title">Minute Precipitation</div></div>
+      <div class="precip-wrap">
+        <div class="precip-bars" id="precipBars"></div>
+        <div class="precip-times" id="precipTimes"></div>
+      </div>
+      <div class="legend-grid">
+        <div class="leg-item"><div class="leg-dot" style="background:#34d399"></div>0–0.1 mm/h</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#38bdf8"></div>0.5–2 mm/h</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#fbbf24"></div>2.5–7 mm/h</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#f87171"></div>7.5+ mm/h</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card uv">
+    <div class="stat-lbl">☀ UV Index</div>
+    <div class="stat-val" id="uvVal" style="color:var(--yellow)">--</div>
+    <div class="stat-sub" id="uvLabel">--</div>
+    <div class="uv-track"><div class="uv-fill" id="uvFill" style="width:0%"></div></div>
+  </div>
+  <div class="stat-card wnd">
+    <div class="stat-lbl">💨 Wind</div>
+    <div class="stat-val" id="windVal" style="color:var(--accent)">--</div>
+    <div class="stat-sub" id="windDirLabel">Direction: --</div>
+    <div class="compass-wrap">
+      <div class="compass">
+        <div class="compass-dirs">
+          <span class="cn">N</span><span class="cs">S</span>
+          <span class="cw">W</span><span class="ce">E</span>
+        </div>
+        <div class="compass-needle" id="compassNeedle"></div>
+      </div>
+      <div style="font-size:.7rem;color:var(--muted);" id="gustLabel">Gust: --</div>
+    </div>
+  </div>
+  <div class="stat-card prs">
+    <div class="stat-lbl">🔽 Pressure</div>
+    <div class="stat-val" id="presVal" style="color:var(--green)">--</div>
+    <div class="stat-sub">hPa</div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:6px;" id="presTrend">--</div>
+  </div>
+  <div class="stat-card sun">
+    <div class="stat-lbl">🌅 Sun</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:4px;">
+      <div>
+        <div style="font-size:.62rem;color:var(--muted);">Sunrise</div>
+        <div style="font-size:1rem;font-weight:800;color:var(--orange);" id="sunriseVal">--:--</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:.62rem;color:var(--muted);">Sunset</div>
+        <div style="font-size:1rem;font-weight:800;color:var(--yellow);" id="sunsetVal">--:--</div>
+      </div>
+    </div>
+    <div class="sun-arc-wrap">
+      <svg class="sun-arc-svg" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 55 Q100 5 190 55" fill="none" stroke="rgba(251,191,36,0.15)" stroke-width="2"/>
+        <path id="sunArcFill" d="M10 55 Q100 5 190 55" fill="none" stroke="url(#sunG)" stroke-width="2.5"
+          stroke-dasharray="220" stroke-dashoffset="220" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="sunG" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fb923c"/>
+            <stop offset="100%" stop-color="#fbbf24"/>
+          </linearGradient>
+        </defs>
+        <circle id="sunDot" cx="10" cy="55" r="4" fill="#fbbf24" filter="drop-shadow(0 0 5px #fbbf24)"/>
+        <text x="4"   y="63" fill="rgba(251,146,60,.5)" font-size="8" font-family="Syne">🌅</text>
+        <text x="180" y="63" fill="rgba(251,191,36,.5)" font-size="8" font-family="Syne">🌇</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-row">
+  <div class="weekly-card">
+    <div class="card-title">7-Day Forecast</div>
+    <div class="week-list" id="weekList"><div style="color:var(--muted);font-size:.8rem;padding:10px 0;">Loading…</div></div>
+  </div>
+  <div class="aqi-card">
+    <div class="card-title">Air Quality Index</div>
+    <div class="aqi-big" id="aqiVal" style="color:var(--green)">--</div>
+    <div class="aqi-badge" id="aqiBadge" style="background:rgba(52,211,153,.15);color:var(--green)">Loading…</div>
+    <div class="aqi-bar-wrap">
+      <div class="aqi-seg" style="background:#34d399;border-radius:9px 0 0 9px;"></div>
+      <div class="aqi-seg" style="background:#fbbf24;"></div>
+      <div class="aqi-seg" style="background:#fb923c;"></div>
+      <div class="aqi-seg" style="background:#f87171;"></div>
+      <div class="aqi-seg" style="background:#a78bfa;border-radius:0 9px 9px 0;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.58rem;color:var(--muted2);margin-bottom:5px;">
+      <span>Good</span><span>Fair</span><span>Moderate</span><span>Poor</span><span>V.Poor</span>
+    </div>
+    <div class="aqi-poll-grid" id="pollGrid">
+      <div class="aqi-poll"><div class="aqi-poll-v" id="pm25" style="color:var(--accent)">--</div><div class="aqi-poll-n">PM2.5</div></div>
+      <div class="aqi-poll"><div class="aqi-poll-v" id="pm10" style="color:var(--green)">--</div><div class="aqi-poll-n">PM10</div></div>
+      <div class="aqi-poll"><div class="aqi-poll-v" id="o3"   style="color:var(--yellow)">--</div><div class="aqi-poll-n">O₃</div></div>
+      <div class="aqi-poll"><div class="aqi-poll-v" id="no2"  style="color:var(--orange)">--</div><div class="aqi-poll-n">NO₂</div></div>
+      <div class="aqi-poll"><div class="aqi-poll-v" id="so2"  style="color:var(--red)">--</div><div class="aqi-poll-n">SO₂</div></div>
+      <div class="aqi-poll"><div class="aqi-poll-v" id="co"   style="color:var(--muted)">--</div><div class="aqi-poll-n">CO (mg)</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
