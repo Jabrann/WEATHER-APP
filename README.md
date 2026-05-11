@@ -2,8 +2,6 @@
 
 Aplikasi cuaca real-time dengan desain pastel pink-blue. Dibangun tanpa framework — hanya HTML, CSS, dan JavaScript.
 
-**Live Demo:** `https://username.github.io/weathernow/` (ganti dengan link kamu)
-
 ---
 
 ## Fitur
