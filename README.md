@@ -55,7 +55,7 @@ Pilih salah satu:
 3. **Pasang API key**
    Buka `script.js` atau `script.js`, ganti baris:
    ```js
-   const API_KEY = 'e0b0aa54b0f13ee7f0f887447464a590';
+   const API_KEY = 'YOUR_API_KEY_HERE';
    ```
    dengan key kamu.
 
