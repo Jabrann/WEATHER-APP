@@ -1,5 +1,5 @@
 
-const API_KEY = 'YOUR_API_KEY_HERE';
+const API_KEY = 'e0b0aa54b0f13ee7f0f887447464a590';
 const OWM = 'https://api.openweathermap.org';
 
 let useCelsius = true;
